@@ -12,15 +12,22 @@ import org.springframework.web.multipart.MultipartFile;
 import com.website.backend.entity.Article;
 import com.website.backend.entity.Attachment;
 import com.website.backend.entity.ArticlePicture;
+import com.website.backend.entity.Comment;
+import com.website.backend.entity.Tag;
+import com.website.backend.entity.ArticleTag;
 import com.website.backend.model.ApiResponse;
 import com.website.backend.repository.ArticleRepository;
 import com.website.backend.repository.AttachmentRepository;
 import com.website.backend.repository.ArticlePictureRepository;
+import com.website.backend.repository.CommentRepository;
+import com.website.backend.repository.TagRepository;
+import com.website.backend.repository.ArticleTagRepository;
 import com.website.backend.service.AttachmentService;
 import com.website.backend.DTO.ArticleDTO;
 import com.website.backend.DTO.ArticleListDTO;
 import com.website.backend.DTO.DeleteArticleResponseDTO;
 import com.website.backend.util.DTOConverter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.website.backend.service.ArticlePictureService;
@@ -28,11 +35,13 @@ import com.website.backend.exception.ResourceNotFoundException;
 import com.website.backend.exception.FileUploadException;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
+import java.util.UUID;
 
 
 @RestController
@@ -45,14 +54,21 @@ public class ArticleController {
     private final ArticlePictureService articlePictureService;
     private final ArticlePictureRepository articlePictureRepository;
     private final DTOConverter dtoConverter;
+    private final CommentRepository commentRepository;
+    private final TagRepository tagRepository;
+    private final ArticleTagRepository articleTagRepository;
 
-    public ArticleController(ArticleRepository articleRepo, AttachmentService attachmentService, AttachmentRepository attachmentRepository, ArticlePictureService articlePictureService, ArticlePictureRepository articlePictureRepository, DTOConverter dtoConverter) {
+    public ArticleController(ArticleRepository articleRepo, AttachmentService attachmentService, AttachmentRepository attachmentRepository, ArticlePictureService articlePictureService, ArticlePictureRepository articlePictureRepository, DTOConverter dtoConverter, CommentRepository commentRepository, TagRepository tagRepository, ArticleTagRepository articleTagRepository) {
         this.articleRepo = articleRepo;
         this.attachmentService = attachmentService;
         this.attachmentRepository = attachmentRepository;
         this.articlePictureService = articlePictureService;
         this.articlePictureRepository = articlePictureRepository;
         this.dtoConverter = dtoConverter;
+        this.commentRepository = commentRepository;
+        this.tagRepository = tagRepository;
+        this.articleTagRepository = articleTagRepository;
+
     }
 
     // 抽取公共方法处理分页和DTO转换
@@ -138,7 +154,7 @@ public class ArticleController {
                 logger.info("开始上传文章附件，文章ID: {}", savedArticle.getArticleId());
                 try {
                     attachmentService.uploadAttachment(attachment, savedArticle);
-                } catch (IOException e) {
+           catch (IOException e) {
                     logger.error("文章附件上传失败: {}", e.getMessage());
                     throw new FileUploadException(savedArticle.getTitle() + "文章创建成功，但附件上传失败: " + e.getMessage());
                 }
@@ -343,5 +359,181 @@ public class ArticleController {
         }
     }
 
+    // 添加评论
+    @PostMapping("/{articleId}/comments")
+    public ApiResponse<Comment> addComment(
+            @PathVariable Long articleId,
+            @RequestParam String content,
+            @RequestParam(required = false) Long parentId,
+            HttpServletRequest request) {
+        logger.info("添加评论，文章ID: {}", articleId);
+        try {
+            // 检查文章是否存在
+            Article article = articleRepo.findById(articleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+            Comment comment = new Comment();
+            comment.setArticleId(articleId);
+            comment.setParentId(parentId);
+            // 生成固定前缀+UUID的昵称
+            String nickname = "Bro有话说" + UUID.randomUUID().toString().substring(0, 8);
+            comment.setNickname(nickname);
+            comment.setContent(content);
+            comment.setCreateTime(LocalDateTime.now());
+            comment.setIpAddress(request.getRemoteAddr());
+
+            Comment savedComment = commentRepository.save(comment);
+            logger.info("评论添加成功，ID: {}", savedComment.getId());
+            return ApiResponse.success(savedComment);
+        } catch (ResourceNotFoundException e) {
+            logger.error("添加评论失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("添加评论失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "添加评论失败: " + e.getMessage());
+        }
+    }
+
+    // 获取文章的所有评论
+    @GetMapping("/{articleId}/comments")
+    public ApiResponse<List<Comment>> getArticleComments(@PathVariable Long articleId) {
+        logger.info("获取文章评论，文章ID: {}", articleId);
+        try {
+            // 检查文章是否存在
+            Article article = articleRepo.findById(articleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+            List<Comment> comments = commentRepository.findByArticleId(articleId);
+            logger.info("成功获取文章评论，数量: {}", comments.size());
+            return ApiResponse.success(comments);
+        } catch (ResourceNotFoundException e) {
+            logger.error("获取文章评论失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("获取文章评论失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "获取文章评论失败: " + e.getMessage());
+        }
+    }
+
+    // 为文章添加标签
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{articleId}/tags")
+    public ApiResponse<List<Tag>> addArticleTags(
+            @PathVariable Long articleId,
+            @RequestParam List<String> tagNames) {
+        logger.info("为文章添加标签，文章ID: {}, 标签数量: {}", articleId, tagNames.size());
+        try {
+            // 检查文章是否存在
+            Article article = articleRepo.findById(articleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+            List<Tag> tags = new ArrayList<>();
+            for (String tagName : tagNames) {
+                // 查找或创建标签
+                Tag tag = tagRepository.findByName(tagName)
+                        .orElseGet(() -> {
+                            Tag newTag = new Tag();
+                            newTag.setName(tagName);
+                            newTag.setCreateTime(LocalDateTime.now());
+                            return tagRepository.save(newTag);
+                        });
+                tags.add(tag);
+            }
+
+            logger.info("文章标签添加成功");
+            return ApiResponse.success(tags);
+        } catch (ResourceNotFoundException e) {
+            logger.error("添加文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("添加文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "添加文章标签失败: " + e.getMessage());
+        }
+    }
+
+    // 获取文章的所有标签
+    @GetMapping("/{articleId}/tags")
+    public ApiResponse<List<Tag>> getArticleTags(@PathVariable Long articleId) {
+        logger.info("获取文章标签，文章ID: {}", articleId);
+        try {
+            // 检查文章是否存在
+            Article article = articleRepo.findById(articleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+            // 通过article_tags关联表查询标签ID
+            List<ArticleTag> articleTags = articleTagRepository.findByArticleId(articleId);
+            List<Long> tagIds = articleTags.stream()
+                    .map(ArticleTag::getTagId)
+                    .collect(Collectors.toList());
+
+            // 根据标签ID查询标签信息
+            List<Tag> tags = new ArrayList<>();
+            if (!tagIds.isEmpty()) {
+                tags = tagRepository.findAllById(tagIds);
+            }
+
+            logger.info("成功获取文章标签，数量: {}", tags.size());
+            return ApiResponse.success(tags);
+        } catch (ResourceNotFoundException e) {
+            logger.error("获取文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("获取文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "获取文章标签失败: " + e.getMessage());
+        }
+    }
+
+    // 获取所有标签
+    @GetMapping("/tags")
+    public ApiResponse<List<Tag>> getAllTags() {
+        logger.info("获取所有标签");
+        try {
+            List<Tag> tags = tagRepository.findAll();
+            logger.info("成功获取所有标签，数量: {}", tags.size());
+            return ApiResponse.success(tags);
+        } catch (Exception e) {
+            logger.error("获取所有标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "获取所有标签失败: " + e.getMessage());
+        }
+    }
+
+    // 根据标签获取文章列表
+    @GetMapping("/tag/{tagName}")
+    public ApiResponse<ArticleListDTO> articlesByTag(
+            @PathVariable String tagName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("获取标签 [{}] 文章列表，页码: {}, 每页数量: {}", tagName, page, size);
+        try {
+            // 查找标签
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseThrow(() -> new ResourceNotFoundException("标签不存在"));
+
+            // 通过article_tags关联表查询文章ID
+            List<ArticleTag> articleTags = articleTagRepository.findByTagId(tag.getId());
+            List<Long> articleIds = articleTags.stream()
+                    .map(ArticleTag::getArticleId)
+                    .collect(Collectors.toList());
+
+            // 根据文章ID查询文章信息并分页
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Article> articlePage;
+            if (articleIds.isEmpty()) {
+                articlePage = Page.empty(pageable);
+            } else {
+                articlePage = articleRepo.findByIdIn(new ArrayList<>(articleIds), pageable);
+            }
+
+            ArticleListDTO articleListDTO = buildArticleListDTO(articlePage);
+            logger.info("成功获取标签 [{}] 文章列表，共 {} 页，当前第 {} 页", tagName, articleListDTO.getTotalPages(), articleListDTO.getCurrentPage());
+            return ApiResponse.success(articleListDTO);
+        } catch (ResourceNotFoundException e) {
+            logger.error("获取标签文章列表失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("获取标签文章列表失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "获取标签文章列表失败: " + e.getMessage());
+        }
+    }
 
 }
