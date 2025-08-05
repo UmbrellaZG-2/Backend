@@ -1,5 +1,6 @@
 package com.website.backend.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -57,5 +58,14 @@ public class HomeController {
     public static class LoginRequest {
         private String username;
         private String password;
+    }
+
+    // 跳转到关于我页面
+    @GetMapping("/aboutMe")
+    public ResponseEntity<Void> redirectToAboutMe() {
+        log.info("重定向到关于我页面");
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", "/aboutMe.html")
+                .build();
     }
 }
