@@ -2,39 +2,27 @@ package com.website.backend.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.website.backend.constant.HttpStatusConstants;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.website.backend.entity.Article;
-import com.website.backend.entity.Attachment;
-import com.website.backend.entity.ArticlePicture;
 import com.website.backend.entity.Comment;
 import com.website.backend.entity.Tag;
 import com.website.backend.entity.ArticleTag;
 import com.website.backend.model.ApiResponse;
 import com.website.backend.repository.ArticleRepository;
-import com.website.backend.repository.AttachmentRepository;
-import com.website.backend.repository.ArticlePictureRepository;
 import com.website.backend.repository.CommentRepository;
 import com.website.backend.repository.TagRepository;
 import com.website.backend.repository.ArticleTagRepository;
-import com.website.backend.service.AttachmentService;
 import com.website.backend.DTO.ArticleDTO;
 import com.website.backend.DTO.ArticleListDTO;
 import com.website.backend.DTO.DeleteArticleResponseDTO;
 import com.website.backend.util.DTOConverter;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
-import com.website.backend.service.ArticlePictureService;
 import com.website.backend.exception.ResourceNotFoundException;
-import com.website.backend.exception.FileUploadException;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,21 +37,13 @@ import java.util.UUID;
 public class ArticleController {
     private static final Logger logger = LoggerFactory.getLogger(ArticleController.class);
     private final ArticleRepository articleRepo;
-    private final AttachmentService attachmentService;
-    private final AttachmentRepository attachmentRepository;
-    private final ArticlePictureService articlePictureService;
-    private final ArticlePictureRepository articlePictureRepository;
     private final DTOConverter dtoConverter;
     private final CommentRepository commentRepository;
     private final TagRepository tagRepository;
     private final ArticleTagRepository articleTagRepository;
 
-    public ArticleController(ArticleRepository articleRepo, AttachmentService attachmentService, AttachmentRepository attachmentRepository, ArticlePictureService articlePictureService, ArticlePictureRepository articlePictureRepository, DTOConverter dtoConverter, CommentRepository commentRepository, TagRepository tagRepository, ArticleTagRepository articleTagRepository) {
+    public ArticleController(ArticleRepository articleRepo, DTOConverter dtoConverter, CommentRepository commentRepository, TagRepository tagRepository, ArticleTagRepository articleTagRepository) {
         this.articleRepo = articleRepo;
-        this.attachmentService = attachmentService;
-        this.attachmentRepository = attachmentRepository;
-        this.articlePictureService = articlePictureService;
-        this.articlePictureRepository = articlePictureRepository;
         this.dtoConverter = dtoConverter;
         this.commentRepository = commentRepository;
         this.tagRepository = tagRepository;
@@ -151,50 +131,50 @@ public class ArticleController {
     public ApiResponse<ArticleDTO> createArticle(
             @RequestParam String title,
             @RequestParam String category,
-            @RequestParam String content,
-            @RequestParam(required = false) MultipartFile attachment,
-            @RequestParam(required = false) MultipartFile picture) {
-            logger.info("创建新文章，标题: {}", title);
+            @RequestParam String content) {
+        logger.info("开始创建文章，标题: {}", title);
+        try {
+            // 添加输入验证
+            if (title == null || title.trim().isEmpty()) {
+                logger.warn("文章标题不能为空");
+                return ApiResponse.fail(HttpStatusConstants.BAD_REQUEST, "文章标题不能为空");
+            }
+            if (category == null || category.trim().isEmpty()) {
+                logger.warn("文章分类不能为空");
+                return ApiResponse.fail(HttpStatusConstants.BAD_REQUEST, "文章分类不能为空");
+            }
+            if (content == null || content.trim().isEmpty()) {
+                logger.warn("文章内容不能为空");
+                return ApiResponse.fail(HttpStatusConstants.BAD_REQUEST, "文章内容不能为空");
+            }
+
+            // 创建新文章
             Article article = new Article();
             article.setTitle(title);
             article.setCategory(category);
             article.setContent(content);
+            article.setCreateTime(LocalDateTime.now());
+            article.setUpdateTime(LocalDateTime.now());
+            article.setAddAttach(false);
+            article.setAddPicture(false);
+            logger.info("文章创建完成，标题: {}", title);
 
-            // 保存文章到数据库以获取自增id
+            // 保存文章
             Article savedArticle = articleRepo.save(article);
             logger.info("文章保存成功，ID: {}", savedArticle.getArticleId());
-
-            // 上传附件（如果有）
-            if (attachment != null && !attachment.isEmpty()) {
-                logger.info("开始上传文章附件，文章ID: {}", savedArticle.getArticleId());
-                try {
-                    attachmentService.uploadAttachment(attachment, savedArticle);
-                }
-           catch (IOException e) {
-                    logger.error("文章附件上传失败: {}", e.getMessage());
-                    throw new FileUploadException(savedArticle.getTitle() + "文章创建成功，但附件上传失败: " + e.getMessage());
-                }
-                logger.info("文章附件上传成功");
-            }
-
-            // 上传封面图片（如果有）
-            if (picture != null && !picture.isEmpty()) {
-                logger.info("开始上传文章封面图片，文章ID: {}", savedArticle.getArticleId());
-                try {
-                    articlePictureService.uploadPicture(picture, savedArticle);
-                    logger.info("文章封面图片上传成功");
-                } catch (IOException e) {
-                    // 抛出文件上传异常
-                    logger.error("文章封面图片上传失败: {}", e.getMessage());
-                    throw new FileUploadException(savedArticle.getTitle() + "文章创建成功，但图片上传失败: " + e.getMessage());
-                }
-            }
 
             // 将Article转换为ArticleDTO
             ArticleDTO dto = dtoConverter.convertToDTO(savedArticle);
             logger.info("文章创建完成，返回DTO: {}", dto.getTitle());
             return ApiResponse.success(dto);
+        } catch (Exception e) {
+            logger.error("文章创建失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "文章创建失败: " + e.getMessage());
+        }
     }
+
+    // 注意: 附件和图片上传功能已迁移到AttachmentController
+    // 使用 /api/attachments/admin/articles/attachments 接口上传附件和图片
 
     // 管理员更新文章（支持附件更新和删除，封面图片更新和删除）
     @PreAuthorize("hasRole('ADMIN')")
@@ -203,11 +183,7 @@ public class ArticleController {
             @PathVariable Long id,
             @RequestParam String title,
             @RequestParam String category,
-            @RequestParam String content,
-            @RequestParam(required = false) MultipartFile attachment,
-            @RequestParam(required = false, defaultValue = "false") boolean deleteAttachment,
-            @RequestParam(required = false) MultipartFile picture,
-            @RequestParam(required = false, defaultValue = "false") boolean deletePicture) {
+            @RequestParam String content) {
         logger.info("开始更新文章，ID: {}", id);
         try {
             Optional<Article> articleOptional = articleRepo.findById(id);
@@ -221,38 +197,6 @@ public class ArticleController {
             article.setCategory(category);
             article.setContent(content);
             logger.info("文章信息更新完成，标题: {}", title);
-
-            // 处理附件
-            if (deleteAttachment) {
-                logger.info("删除文章附件，文章ID: {}", article.getArticleId());
-                attachmentService.deleteAttachmentsByArticle(article);
-                article.setAddAttach(false);
-                logger.info("文章附件删除成功");
-            } else if (attachment != null && !attachment.isEmpty()) {
-                // 如果已有附件，先删除
-                if (article.isAddAttach()) {
-                    logger.info("删除旧文章附件，文章ID: {}", article.getArticleId());
-                    attachmentService.deleteAttachmentsByArticle(article);
-                }
-                article.setAddAttach(true);
-                logger.info("准备上传新文章附件");
-            } // 否则保持原有状态
-
-            // 处理封面图片
-            if (deletePicture) {
-                logger.info("删除文章封面图片，文章ID: {}", article.getArticleId());
-                articlePictureService.deletePictureByArticle(article);
-                article.setAddPicture(false);
-                logger.info("文章封面图片删除成功");
-            } else if (picture != null && !picture.isEmpty()) {
-                // 如果已有图片，先删除
-                if (article.isAddPicture()) {
-                    logger.info("删除旧文章封面图片，文章ID: {}", article.getArticleId());
-                    articlePictureService.deletePictureByArticle(article);
-                }
-                article.setAddPicture(true);
-                logger.info("准备上传新文章封面图片");
-            } // 否则保持原有状态
 
             // 添加输入验证
             if (title == null || title.trim().isEmpty()) {
@@ -272,31 +216,10 @@ public class ArticleController {
             Article updatedArticle = articleRepo.save(article);
             logger.info("文章保存成功，ID: {}", updatedArticle.getArticleId());
 
-            // 上传附件（如果有）
-            if (attachment != null && !attachment.isEmpty()) {
-                logger.info("开始上传文章附件，文章ID: {}", updatedArticle.getArticleId());
-                Attachment newAttachment = attachmentService.uploadAttachment(attachment, updatedArticle);
-                newAttachment.setArticleId(updatedArticle.getArticleId());
-                attachmentRepository.save(newAttachment);
-                logger.info("文章附件上传成功");
-            }
-
-            // 上传封面图片（如果有）
-            if (picture != null && !picture.isEmpty()) {
-                logger.info("开始上传文章封面图片，文章ID: {}", updatedArticle.getArticleId());
-                try {
-                    ArticlePicture newPicture = articlePictureService.uploadPicture(picture, updatedArticle);
-                    newPicture.setArticleId(updatedArticle.getArticleId());
-                    articlePictureRepository.save(newPicture);
-                    logger.info("文章封面图片上传成功");
-                } catch (IOException e) {
-                    // 处理图片上传异常
-                    logger.error("文章封面图片上传失败: {}", e.getMessage());
-                    return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, updatedArticle.getTitle()+" 文章更新成功，但图片上传失败: " + e.getMessage());
-                }
-            }
-
             // 将Article转换为ArticleDTO
+
+            // 注意: 附件和图片更新功能已迁移到AttachmentController
+            // 使用 /api/attachments/admin/articles/{id}/attachments 接口更新附件和图片
             ArticleDTO dto = dtoConverter.convertToDTO(updatedArticle);
             logger.info("文章更新完成，返回DTO: {}", dto.getTitle());
             return ApiResponse.success(dto);
@@ -306,40 +229,10 @@ public class ArticleController {
         }
     }
 
-    // 下载附件接口 - 所有用户可访问
-    @GetMapping("/attachments/{attachmentId}")
-    public void downloadAttachment(@PathVariable Long attachmentId, HttpServletResponse response) {
-        try {
-            Attachment attachment = attachmentRepository.findById(attachmentId)
-                    .orElseThrow(() -> new IOException("Attachment not found"));
-            byte[] fileContent = attachmentService.downloadAttachment(attachmentId);
+    // 注意: 下载附件接口已迁移到AttachmentController
+    // 使用 /api/attachments/{attachmentId} 接口下载附件
 
-            // 设置响应头
-            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"");
-            response.setContentLength(fileContent.length);
-            
-            // 写入响应体
-            try (java.io.OutputStream os = response.getOutputStream()) {
-                os.write(fileContent);
-                os.flush();
-            }
-        } catch (IOException e) {
-            response.setStatus(HttpStatusConstants.NOT_FOUND);
-            try {
-                response.getWriter().write("附件不存在: " + e.getMessage());
-            } catch (IOException ex) {
-                // 忽略
-            }
-        } catch (Exception e) {
-            response.setStatus(HttpStatusConstants.INTERNAL_SERVER_ERROR);
-            try {
-                response.getWriter().write("下载附件失败: " + e.getMessage());
-            } catch (IOException ex) {
-                // 忽略
-            }
-        }
-    }
+
 
 
     // 管理员删除文章（同时删除相关附件）
@@ -353,15 +246,8 @@ public class ArticleController {
             }
 
             Article article = articleOptional.get();
-            // 如果文章有附件，先删除附件
-            if (article.isAddAttach()) {
-                attachmentService.deleteAttachmentsByArticle(article);
-            }
-
-            // 如果文章有封面图片，先删除图片
-            if (article.isAddPicture()) {
-                articlePictureService.deletePictureByArticle(article);
-            }
+            // 注意: 附件和图片清理功能已迁移到AttachmentController
+            // 删除文章前请先调用 /api/attachments/admin/articles/{id}/cleanup 接口清理附件和图片
 
             // 删除文章
             articleRepo.deleteById(id);
@@ -431,9 +317,6 @@ public class ArticleController {
         }
     }
 
-    // 为文章添加标签
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{articleId}/tags")
 
     // 删除文章的标签
     @PreAuthorize("hasRole('ADMIN')")
@@ -482,10 +365,12 @@ public class ArticleController {
         }
     }
 
-    // 获取文章的所有标签
+    // 为文章添加标签
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/{articleId}/tags")
     public ApiResponse<List<Tag>> addArticleTags(
             @PathVariable Long articleId,
-            @RequestParam List<String> tagNames) {
+            @RequestBody List<String> tagNames) {
         logger.info("为文章添加标签，文章ID: {}, 标签数量: {}", articleId, tagNames.size());
         try {
             // 检查文章是否存在
