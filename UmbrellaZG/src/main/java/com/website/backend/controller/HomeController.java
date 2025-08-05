@@ -1,45 +1,30 @@
 package com.website.backend.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.website.backend.entity.Role;
-import com.website.backend.entity.User;
 import com.website.backend.exception.ResourceNotFoundException;
 import com.website.backend.model.ApiResponse;
-import com.website.backend.repository.RoleRepository;
-import com.website.backend.repository.UserRepository;
-import com.website.backend.security.JwtTokenProvider;
+import com.website.backend.service.GuestService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/")
+@Slf4j
 public class HomeController {
 
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final GuestService guestService;
 
     public HomeController(
-            AuthenticationManager authenticationManager,
-            UserRepository userRepository,
-            RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            JwtTokenProvider jwtTokenProvider) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+            GuestService guestService) {
         this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.guestService = guestService;
     }
 
     // 首页重定向
@@ -51,35 +36,22 @@ public class HomeController {
     // 游客登录
     @PostMapping("/api/guest/login")
     public ResponseEntity<?> guestLogin() {
-        // 创建临时游客用户
-        String guestUsername = "guest_" + System.currentTimeMillis();
+        log.info("处理游客登录请求");
+
+        // 生成游客用户名和密码
+        String guestUsername = guestService.generateGuestUsername();
         String guestPassword = "guest_password";
 
-        User guestUser = new User();
-        guestUser.setUsername(guestUsername);
-        guestUser.setPassword(passwordEncoder.encode(guestPassword));
+        // 保存游客信息到Redis
+        guestService.saveGuestToRedis(guestUsername, guestPassword);
 
-        Role visitorRole = roleRepository.findByName(Role.RoleName.ROLE_VISITOR)
-                .orElseThrow(() -> new ResourceNotFoundException("游客角色不存在"));
-        guestUser.setRoles(Collections.singleton(visitorRole));
-
-        userRepository.save(guestUser);
-
-        // 自动登录游客用户
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        guestUsername,
-                        guestPassword
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtTokenProvider.generateToken(authentication);
+        // 生成JWT令牌
+        String jwt = guestService.generateGuestToken(guestUsername);
 
         Map<String, String> response = new HashMap<>();
         response.put("token", jwt);
         response.put("type", "Bearer");
-        response.put("message", "游客登录成功");
+        response.put("message", "游客登录成功，有效期6小时");
 
         return ResponseEntity.ok(response);
     }

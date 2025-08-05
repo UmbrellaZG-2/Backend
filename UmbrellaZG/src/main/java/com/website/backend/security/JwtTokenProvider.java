@@ -27,10 +27,22 @@ public class JwtTokenProvider {
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
 
+        return generateTokenWithExpiration(authentication, jwtExpirationMs);
+    }
+
+    /**
+     * 生成具有自定义过期时间的JWT令牌
+     * @param authentication 认证信息
+     * @param expirationMs 过期时间(毫秒)
+     * @return JWT令牌
+     */
+    public String generateTokenWithExpiration(Authentication authentication, long expirationMs) {
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+
         return Jwts.builder()
                 .subject(userPrincipal.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSignInKey())
                 .compact();
     }
