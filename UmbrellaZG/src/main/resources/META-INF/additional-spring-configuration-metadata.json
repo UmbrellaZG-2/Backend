@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "app.guest.expirationMs",
+  "type": "java.lang.String",
+  "description": "A description for 'app.guest.expirationMs'"
+}]}

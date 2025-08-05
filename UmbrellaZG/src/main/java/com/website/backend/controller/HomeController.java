@@ -3,12 +3,10 @@ package com.website.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.website.backend.exception.ResourceNotFoundException;
 import com.website.backend.model.ApiResponse;
 import com.website.backend.service.GuestService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,13 +15,11 @@ import java.util.Map;
 @Slf4j
 public class HomeController {
 
-    private final PasswordEncoder passwordEncoder;
     private final GuestService guestService;
 
     public HomeController(
             PasswordEncoder passwordEncoder,
             GuestService guestService) {
-        this.passwordEncoder = passwordEncoder;
         this.guestService = guestService;
     }
 

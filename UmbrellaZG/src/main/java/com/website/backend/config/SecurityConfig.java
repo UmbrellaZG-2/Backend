@@ -1,6 +1,5 @@
 package com.website.backend.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,10 +23,10 @@ import com.website.backend.service.impl.RedisUserDetailsService;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private RedisUserDetailsService redisUserDetailsService;
+    private final RedisUserDetailsService redisUserDetailsService;
 
-    public SecurityConfig() {
+    public SecurityConfig(RedisUserDetailsService redisUserDetailsService) {
+        this.redisUserDetailsService = redisUserDetailsService;
     }
 
     @Bean

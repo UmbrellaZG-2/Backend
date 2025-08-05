@@ -2,6 +2,7 @@ package com.website.backend.service.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -43,7 +44,7 @@ public class GuestServiceImpl implements GuestService {
 
     @Override
     public String generateGuestUsername() {
-        return GUEST_PREFIX + System.currentTimeMillis();
+        return GUEST_PREFIX + UUID.randomUUID();
     }
 
     @Override
@@ -88,6 +89,10 @@ public class GuestServiceImpl implements GuestService {
 
     @Override
     public String generateGuestToken(String username) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+
         log.info("为游客生成JWT令牌: {}", username);
 
         // 从Redis获取游客信息
