@@ -154,6 +154,7 @@ public class ArticleController {
                 logger.info("开始上传文章附件，文章ID: {}", savedArticle.getArticleId());
                 try {
                     attachmentService.uploadAttachment(attachment, savedArticle);
+                }
            catch (IOException e) {
                     logger.error("文章附件上传失败: {}", e.getMessage());
                     throw new FileUploadException(savedArticle.getTitle() + "文章创建成功，但附件上传失败: " + e.getMessage());
