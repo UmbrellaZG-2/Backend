@@ -200,7 +200,7 @@ public class TagController {
             List<ArticleTag> articleTags = articleTagRepository.findByTagId(tag.getId());
             List<Long> articleIds = articleTags.stream()
                     .map(ArticleTag::getArticleId)
-                    .collect(Collectors.toList());
+                    .toList();
 
             // 根据文章ID查询文章信息并分页
             Pageable pageable = PageRequest.of(page, size);
