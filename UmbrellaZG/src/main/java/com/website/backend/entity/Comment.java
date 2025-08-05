@@ -6,9 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import java.time.LocalDateTime;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ForeignKey;
 import lombok.Data;
 
 @Entity

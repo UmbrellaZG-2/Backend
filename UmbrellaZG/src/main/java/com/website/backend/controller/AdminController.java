@@ -8,12 +8,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.website.backend.exception.ResourceNotFoundException;
 import com.website.backend.model.ApiResponse;
 import com.website.backend.security.JwtTokenProvider;
+import com.website.backend.constant.HttpStatusConstants;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,9 +38,9 @@ public class AdminController {
         this.jwtTokenProvider = jwtTokenProvider;
     }
     @PostMapping("/login")
-    public ApiResponse<Map<String, Object>> login(
-            @RequestParam String username,
-            @RequestParam String password) {
+    public ApiResponse<Map<String, Object>> login(@RequestBody HomeController.LoginRequest loginRequest) {
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
         log.info("管理员登录请求: 用户名={}", username);
         try {
             // 进行身份验证
@@ -70,13 +71,13 @@ public class AdminController {
             return ApiResponse.success(response);
         } catch (AuthenticationException e) {
             log.error("管理员登录失败: 用户名={}, 错误={}", username, e.getMessage());
-            return ApiResponse.fail(401, "认证失败: 用户名或密码错误");
+            return ApiResponse.fail(HttpStatusConstants.UNAUTHORIZED, "认证失败: 用户名或密码错误");
         } catch (ResourceNotFoundException e) {
             log.error("管理员登录失败: {}", e.getMessage());
-            return ApiResponse.fail(403, e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.FORBIDDEN, e.getMessage());
         } catch (Exception e) {
             log.error("管理员登录发生未知错误: {}", e.getMessage());
-            return ApiResponse.fail(500, "登录失败: 服务器内部错误");
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "登录失败: 服务器内部错误");
         }
     }
 }

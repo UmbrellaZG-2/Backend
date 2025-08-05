@@ -48,26 +48,6 @@ public class HomeController {
         return ResponseEntity.ok(ApiResponse.success("请选择登录方式", null));
     }
 
-    // 管理员登录
-    @PostMapping("/api/admin/login")
-    public ResponseEntity<?> adminLogin(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtTokenProvider.generateToken(authentication);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("token", jwt);
-        response.put("type", "Bearer");
-
-        return ResponseEntity.ok(response);
-    }
-
     // 游客登录
     @PostMapping("/api/guest/login")
     public ResponseEntity<?> guestLogin() {
