@@ -100,6 +100,21 @@ public class ArticleController {
             return ApiResponse.success(articleListDTO);
     }
 
+    // 根据文章标题搜索文章
+    @GetMapping("/search")
+    public ApiResponse<ArticleListDTO> searchArticles(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+            logger.info("搜索文章，关键词: {}, 页码: {}, 每页数量: {}", keyword, page, size);
+            // 使用分页查询
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Article> articlePage = articleRepo.findByTitleContaining(keyword, pageable);
+            ArticleListDTO articleListDTO = buildArticleListDTO(articlePage);
+            logger.info("成功搜索文章，共 {} 页，当前第 {} 页", articleListDTO.getTotalPages(), articleListDTO.getCurrentPage());
+            return ApiResponse.success(articleListDTO);
+    }
+
 
     // 文章详情页
     @GetMapping("/{id}")
@@ -419,6 +434,55 @@ public class ArticleController {
     // 为文章添加标签
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{articleId}/tags")
+
+    // 删除文章的标签
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/{articleId}/tags/{tagId}")
+    public ApiResponse<String> deleteArticleTag(
+            @PathVariable Long articleId,
+            @PathVariable Long tagId) {
+        logger.info("删除文章标签，文章ID: {}, 标签ID: {}", articleId, tagId);
+        try {
+            // 检查文章是否存在
+            Article article = articleRepo.findById(articleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+            
+            // 检查标签是否存在
+            Tag tag = tagRepository.findById(tagId)
+                    .orElseThrow(() -> new ResourceNotFoundException("标签不存在"));
+            
+            // 检查文章和标签是否关联
+            List<ArticleTag> articleTags = articleTagRepository.findByArticleId(articleId);
+            boolean isAssociated = articleTags.stream()
+                    .anyMatch(at -> at.getTagId().equals(tagId));
+            
+            if (!isAssociated) {
+                throw new ResourceNotFoundException("文章和标签未关联");
+            }
+            
+            // 删除关联
+            articleTagRepository.deleteByArticleIdAndTagId(articleId, tagId);
+            
+            // 检查是否还有其他文章使用该标签
+            List<ArticleTag> otherArticleTags = articleTagRepository.findByTagId(tagId);
+            if (otherArticleTags.isEmpty()) {
+                // 如果没有其他文章使用该标签，则删除标签
+                tagRepository.delete(tag);
+                logger.info("标签已删除，标签ID: {}", tagId);
+            }
+            
+            logger.info("文章标签删除成功");
+            return ApiResponse.success("文章标签删除成功");
+        } catch (ResourceNotFoundException e) {
+            logger.error("删除文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            logger.error("删除文章标签失败: {}", e.getMessage());
+            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "删除文章标签失败: " + e.getMessage());
+        }
+    }
+
+    // 获取文章的所有标签
     public ApiResponse<List<Tag>> addArticleTags(
             @PathVariable Long articleId,
             @RequestParam List<String> tagNames) {

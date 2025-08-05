@@ -18,4 +18,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     
     // 根据ID列表查询文章
     Page<Article> findByIdIn(List<Long> ids, Pageable pageable);
+    
+    // 根据文章标题模糊搜索
+    Page<Article> findByTitleContaining(String title, Pageable pageable);
 }
