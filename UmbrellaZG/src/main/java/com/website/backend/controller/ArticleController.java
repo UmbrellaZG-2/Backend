@@ -7,9 +7,9 @@ import com.website.backend.constant.HttpStatusConstants;
 import org.springframework.web.bind.annotation.*;
 
 import com.website.backend.entity.Article;
+import com.website.backend.entity.ArticleTag;
 import com.website.backend.entity.Comment;
 import com.website.backend.entity.Tag;
-import com.website.backend.entity.ArticleTag;
 import com.website.backend.model.ApiResponse;
 import com.website.backend.repository.ArticleRepository;
 import com.website.backend.repository.CommentRepository;
@@ -41,14 +41,12 @@ public class ArticleController {
     private final CommentRepository commentRepository;
     private final TagRepository tagRepository;
     private final ArticleTagRepository articleTagRepository;
-
     public ArticleController(ArticleRepository articleRepo, DTOConverter dtoConverter, CommentRepository commentRepository, TagRepository tagRepository, ArticleTagRepository articleTagRepository) {
         this.articleRepo = articleRepo;
         this.dtoConverter = dtoConverter;
         this.commentRepository = commentRepository;
         this.tagRepository = tagRepository;
         this.articleTagRepository = articleTagRepository;
-
     }
 
     // 抽取公共方法处理分页和DTO转换
@@ -346,13 +344,9 @@ public class ArticleController {
             // 删除关联
             articleTagRepository.deleteByArticleIdAndTagId(articleId, tagId);
             
-            // 检查是否还有其他文章使用该标签
-            List<ArticleTag> otherArticleTags = articleTagRepository.findByTagId(tagId);
-            if (otherArticleTags.isEmpty()) {
-                // 如果没有其他文章使用该标签，则删除标签
-                tagRepository.delete(tag);
-                logger.info("标签已删除，标签ID: {}", tagId);
-            }
+            // 直接删除标签，不管是否有其他文章使用
+            tagRepository.delete(tag);
+            logger.info("标签已删除，标签ID: {}", tagId);
             
             logger.info("文章标签删除成功");
             return ApiResponse.success("文章标签删除成功");
