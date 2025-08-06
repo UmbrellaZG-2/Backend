@@ -63,7 +63,7 @@ export const getArticleAttachments = (articleId) => api.get(`/api/attachments/ad
 export const downloadAttachment = (attachmentId) => api.get(`/api/attachments/${attachmentId}/download`, { responseType: 'blob' });
 
 // 认证相关
-export const adminLogin = (credentials) => api.post('/api/admin/login', credentials);
-export const guestLogin = () => api.post('/api/guest/login');
+export const adminLogin = (credentials) => api.post('/api/auth/admin/login', credentials);
+export const guestLogin = () => api.post('/api/auth/guest/login');
 
 export default api;

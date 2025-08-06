@@ -69,10 +69,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 允许所有用户访问的API
                 .requestMatchers("/", "/aboutMe", "/api/articles/**", "/api/guestbook/**", "/api/").permitAll()
-                // 管理员登录API
-                .requestMatchers("/api/admin/login").permitAll()
-                // 游客登录API
-                .requestMatchers("/api/guest/login").permitAll()
+                // 认证相关API
+                .requestMatchers("/api/auth/**").permitAll()
                 // 管理员操作API需要ADMIN角色
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // 其他所有请求需要认证
