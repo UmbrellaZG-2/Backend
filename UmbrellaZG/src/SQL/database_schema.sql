@@ -43,6 +43,9 @@ CREATE TABLE roles (
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
+-- 注意：实体类中Role.name是枚举类型(RoleName)，对应数据库中的VARCHAR(50)
+-- 枚举值为: ROLE_ADMIN, ROLE_VISITOR
+
 -- 创建用户表
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -72,6 +75,8 @@ CREATE TABLE comments (
     FOREIGN KEY (parent_id) REFERENCES comments(id)
 );
 
+-- 注意：Comment实体类未显式指定表名，但默认映射到comments表
+
 -- 创建标签表
 CREATE TABLE tags (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -81,9 +86,9 @@ CREATE TABLE tags (
 
 -- 创建文章-标签关联表
 CREATE TABLE article_tags (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     article_id BIGINT NOT NULL,
     tag_id BIGINT NOT NULL,
-    PRIMARY KEY (article_id, tag_id),
     FOREIGN KEY (article_id) REFERENCES articles(article_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id)
 );
