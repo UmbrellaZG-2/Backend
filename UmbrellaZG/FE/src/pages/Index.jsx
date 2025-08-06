@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getTags, searchArticles, getArticles, getArticlesByCategory, getArticlesByTag } from '@/services/api-adjusted';
+import { getTags, searchArticles, getArticles, getArticlesByCategory, getArticlesByTag, getCategories } from '@/services/api-adjusted';
 import { useNavigate } from 'react-router-dom';
 import ArticleList from '@/components/ArticleList';
 import SearchBar from '@/components/SearchBar';
@@ -38,9 +38,13 @@ const Index = () => {
   });
 
   // 获取分类
-  // 注意：后端没有直接获取所有分类的接口，这里是模拟的
-  const categories = ['技术', '生活', '学习', '工作'];
-  const categoriesLoading = false;
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  });
+
+  // 确保categories是数组类型
+  const safeCategories = Array.isArray(categories) ? categories : [];
 
   // 获取标签
   const { data: tags, isLoading: tagsLoading } = useQuery({
@@ -124,7 +128,7 @@ const Index = () => {
         <Skeleton className="h-10 w-full mb-8" />
       ) : (
         <CategoryNav 
-          categories={categories} 
+          categories={safeCategories} 
           activeCategory={activeCategory} 
           onCategoryChange={handleCategoryChange} 
         />

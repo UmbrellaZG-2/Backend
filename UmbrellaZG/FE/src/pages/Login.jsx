@@ -4,18 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, User, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { adminLogin } from '@/services/api-adjusted';
 
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // 这里可以添加登录逻辑
-    console.log('登录信息:', { username, password });
-    // 登录成功后跳转到首页
-    navigate('/');
+    try {
+      // 调用登录接口
+      const response = await adminLogin({ username, password });
+      // 存储token
+      localStorage.setItem('token', response.token);
+      // 登录成功后跳转到首页
+      navigate('/');
+    } catch (error) {
+      console.error('登录失败:', error);
+      alert('登录失败，请检查用户名和密码');
+    }
   };
 
   return (
@@ -60,7 +68,7 @@ const Login = () => {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={!username || !password}>
               登录
             </Button>
           </form>

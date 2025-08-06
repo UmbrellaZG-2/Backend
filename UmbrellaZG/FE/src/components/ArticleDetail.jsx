@@ -3,9 +3,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Clock, Tag, Download, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { downloadAttachment } from '@/services/api-adjusted';
 
 const ArticleDetail = ({ article }) => {
   const navigate = useNavigate();
+
+  const handleDownload = async (attachmentId, fileName) => {
+    try {
+      const blob = await downloadAttachment(attachmentId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('下载失败:', error);
+      alert('下载失败，请重试');
+    }
+  };
 
   if (!article) {
     return <div>文章未找到</div>;
@@ -79,7 +97,11 @@ const ArticleDetail = ({ article }) => {
                       <h4 className="font-medium">{attachment.name}</h4>
                       <p className="text-sm text-gray-600">{attachment.size} • 下载次数: {attachment.downloadCount}</p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload(attachment.id, attachment.name)}
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       下载
                     </Button>

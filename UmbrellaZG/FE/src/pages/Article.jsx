@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getArticleById } from '@/services/api';
+import { getArticleById } from '@/services/api-adjusted';
 import ArticleDetail from '@/components/ArticleDetail';
 import { Skeleton } from '@/components/ui/skeleton';
 
