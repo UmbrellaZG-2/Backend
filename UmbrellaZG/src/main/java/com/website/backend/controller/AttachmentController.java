@@ -94,10 +94,19 @@ public class AttachmentController {
             // 上传附件（如果有）
             if (attachment != null && !attachment.isEmpty()) {
                 logger.info("开始上传文章附件，文章ID: {}", savedArticle.getArticleId());
-                Attachment newAttachment = attachmentService.uploadAttachment(attachment, savedArticle);
-                newAttachment.setArticleId(savedArticle.getArticleId());
-                attachmentRepository.save(newAttachment);
-                logger.info("文章附件上传成功");
+                try {
+                    Attachment newAttachment = attachmentService.uploadAttachment(attachment, savedArticle);
+                    newAttachment.setArticleId(savedArticle.getArticleId());
+                    attachmentRepository.save(newAttachment);
+                    logger.info("文章附件上传成功");
+                } catch (IOException e) {
+                    if (e.getMessage().contains("附件数量超过限制")) {
+                        logger.warn("文章附件数量超过限制: {}", e.getMessage());
+                        return ApiResponse.fail(HttpStatusConstants.BAD_REQUEST, e.getMessage());
+                    } else {
+                        throw e;
+                    }
+                }
             }
 
             // 上传封面图片（如果有）
@@ -183,10 +192,19 @@ public class AttachmentController {
             // 上传附件（如果有）
             if (attachment != null && !attachment.isEmpty()) {
                 logger.info("开始上传文章附件，文章ID: {}", updatedArticle.getArticleId());
-                Attachment newAttachment = attachmentService.uploadAttachment(attachment, updatedArticle);
-                newAttachment.setArticleId(updatedArticle.getArticleId());
-                attachmentRepository.save(newAttachment);
-                logger.info("文章附件上传成功");
+                try {
+                    Attachment newAttachment = attachmentService.uploadAttachment(attachment, updatedArticle);
+                    newAttachment.setArticleId(updatedArticle.getArticleId());
+                    attachmentRepository.save(newAttachment);
+                    logger.info("文章附件上传成功");
+                } catch (IOException e) {
+                    if (e.getMessage().contains("附件数量超过限制")) {
+                        logger.warn("文章附件数量超过限制: {}", e.getMessage());
+                        return ApiResponse.fail(HttpStatusConstants.BAD_REQUEST, e.getMessage());
+                    } else {
+                        throw e;
+                    }
+                }
             }
 
             // 上传封面图片（如果有）

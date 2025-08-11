@@ -7,13 +7,16 @@ import java.io.File;
 import java.nio.file.Files;
 import com.website.backend.entity.Attachment;
 import com.website.backend.entity.Article;
+import com.website.backend.entity.SystemConfig;
 import com.website.backend.repository.AttachmentRepository;
+import com.website.backend.repository.SystemConfigRepository;
 import com.website.backend.service.AttachmentService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -21,14 +24,26 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final FileStorageConfig fileStorageConfig;
+    private final SystemConfigRepository systemConfigRepository;
 
-    public AttachmentServiceImpl(AttachmentRepository attachmentRepository, FileStorageConfig fileStorageConfig) {
+    public AttachmentServiceImpl(AttachmentRepository attachmentRepository, FileStorageConfig fileStorageConfig, SystemConfigRepository systemConfigRepository) {
         this.attachmentRepository = attachmentRepository;
         this.fileStorageConfig = fileStorageConfig;
+        this.systemConfigRepository = systemConfigRepository;
     }
 
     @Override
     public Attachment uploadAttachment(MultipartFile file, Article article) throws IOException {
+        // 检查附件数量限制
+        int maxAttachCount = getMaxAttachmentCount();
+        int currentAttachCount = getCurrentAttachmentCount(article);
+        
+        if (currentAttachCount >= maxAttachCount) {
+            log.warn("文章附件数量超过限制，文章ID: {}, 当前数量: {}, 限制数量: {}", 
+                    article.getArticleId(), currentAttachCount, maxAttachCount);
+            throw new IOException("附件数量超过限制，最多可上传" + maxAttachCount + "个附件");
+        }
+
         // 验证附件格式
         String fileName = file.getOriginalFilename();
         
@@ -129,6 +144,27 @@ public class AttachmentServiceImpl implements AttachmentService {
         // 从数据库删除附件记录
         attachmentRepository.delete(attachment);
         log.info("从数据库删除附件记录成功,附件ID: {}", attachmentId);
+    }
+
+    private int getMaxAttachmentCount() {
+        // 从数据库中获取最大附件数量配置
+        Optional<SystemConfig> configOptional = systemConfigRepository.findByConfigKey("MaxAttachCount");
+        if (configOptional.isPresent()) {
+            try {
+                return Integer.parseInt(configOptional.get().getConfigValue());
+            } catch (NumberFormatException e) {
+                log.error("MaxAttachCount配置值不是有效数字: {}", configOptional.get().getConfigValue());
+            }
+        } else {
+            log.warn("未找到MaxAttachCount配置，使用默认值10");
+        }
+        // 默认值
+        return 10;
+    }
+
+    private int getCurrentAttachmentCount(Article article) {
+        // 获取当前文章的附件数量
+        return attachmentRepository.countByArticle(article);
     }
 
     @Override
