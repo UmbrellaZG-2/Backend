@@ -25,7 +25,7 @@ public class JwtTokenProvider {
     private int jwtExpirationMs;
 
     public String generateToken(Authentication authentication) {
-        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();于变量 userPrincipal 未被使用，移除该赋值语句
 
         return generateTokenWithExpiration(authentication, jwtExpirationMs);
     }

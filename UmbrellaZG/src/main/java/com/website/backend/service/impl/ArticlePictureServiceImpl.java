@@ -58,7 +58,8 @@ public class ArticlePictureServiceImpl implements ArticlePictureService {
         String storagePath = fileStorageConfig.getArticlePictureStoragePath();
 
         // 生成唯一文件名
-        String cleanedFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String originalFilename = file.getOriginalFilename();
+        String cleanedFileName = originalFilename != null ? StringUtils.cleanPath(originalFilename) : "";
         String uniqueFileName = savedPicture.getPictureId() + "_" + cleanedFileName;
         String filePath = storagePath + File.separator + uniqueFileName;
 
