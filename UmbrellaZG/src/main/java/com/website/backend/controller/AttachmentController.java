@@ -12,9 +12,10 @@ import com.website.backend.repository.ArticlePictureRepository;
 import com.website.backend.service.AttachmentService;
 import com.website.backend.service.ArticlePictureService;
 import com.website.backend.util.DTOConverter;
+import com.website.backend.service.RateLimitService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
@@ -50,6 +52,9 @@ public class AttachmentController {
 
     @Autowired
     private DTOConverter dtoConverter;
+
+    @Autowired
+    private RateLimitService rateLimitService;
 
     // 管理员创建文章时上传附件和图片
     @PreAuthorize("hasRole('ADMIN')")
@@ -234,10 +239,31 @@ public class AttachmentController {
 
     // 下载附件接口 - 所有用户可访问
     @GetMapping("/{attachmentId}")
-    public void downloadAttachment(@PathVariable Long attachmentId, HttpServletResponse response) {
+    public void downloadAttachment(@PathVariable Long attachmentId, HttpServletRequest request, HttpServletResponse response) {
+        // 获取客户端IP地址
+        String clientIp = getClientIpAddress(request);
+
+        // 检查IP是否被阻止或超过下载限制
+        if (rateLimitService.isIpBlocked(clientIp) || rateLimitService.recordDownloadRequest(clientIp)) {
+            response.setStatus(HttpStatusConstants.FORBIDDEN);
+            try {
+                response.getWriter().write("下载频率过高，请24小时后再试");
+            } catch (IOException ex) {
+                // 忽略
+            }
+            return;
+        }
         try {
             Attachment attachment = attachmentRepository.findById(attachmentId)
                     .orElseThrow(() -> new IOException("Attachment not found"));
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedForHeader = request.getHeader("X-Forwarded-For");
+        if (xForwardedForHeader != null && !xForwardedForHeader.isEmpty()) {
+            return xForwardedForHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
             byte[] fileContent = attachmentService.downloadAttachment(attachmentId);
 
             // 设置响应头

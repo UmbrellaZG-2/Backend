@@ -159,7 +159,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             log.warn("未找到MaxAttachCount配置，使用默认值10");
         }
         // 默认值
-        return 10;
+        return 5;
     }
 
     private int getCurrentAttachmentCount(Article article) {
