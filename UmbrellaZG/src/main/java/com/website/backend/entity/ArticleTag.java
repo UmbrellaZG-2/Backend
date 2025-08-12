@@ -11,13 +11,15 @@ import java.io.Serializable;
 @Entity
 @Data
 public class ArticleTag implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false)
-    private Long articleId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(nullable = false)
-    private Long tagId;
+	@Column(nullable = false)
+	private Long articleId;
+
+	@Column(nullable = false)
+	private Long tagId;
+
 }

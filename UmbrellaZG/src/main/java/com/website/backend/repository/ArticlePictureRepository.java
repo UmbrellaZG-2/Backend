@@ -9,6 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface ArticlePictureRepository extends JpaRepository<ArticlePicture, Long> {
-    Optional<ArticlePicture> findByArticle(Article article);
-    void deleteByArticle(Article article);
+
+	Optional<ArticlePicture> findByArticle(Article article);
+
+	void deleteByArticle(Article article);
+
 }

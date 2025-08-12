@@ -9,8 +9,12 @@ import java.util.List;
 @Repository
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
-    List<Attachment> findByArticle(Article article);
-    void deleteByArticle(Article article);
-    int countByArticle(Article article);
-    // 继承自JpaRepository的方法已包含findById等CRUD操作
+
+	List<Attachment> findByArticle(Article article);
+
+	void deleteByArticle(Article article);
+
+	int countByArticle(Article article);
+	// 继承自JpaRepository的方法已包含findById等CRUD操作
+
 }

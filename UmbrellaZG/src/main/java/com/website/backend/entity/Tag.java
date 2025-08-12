@@ -8,16 +8,24 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import lombok.Data;
 
+/**
+ * 标签实体类，对应文章标签表
+ */
 @Entity
 @Data
 public class Tag {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String name;
+	/** 主键ID */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(nullable = false)
-    private LocalDateTime createTime;
+	/** 标签名称，唯一且不超过50字符 */
+	@Column(nullable = false, unique = true, length = 50)
+	private String name;
+
+	/** 创建时间 */
+	@Column(nullable = false)
+	private LocalDateTime createTime;
+
 }

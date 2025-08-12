@@ -23,65 +23,67 @@ import com.website.backend.service.impl.RedisUserDetailsService;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final RedisUserDetailsService redisUserDetailsService;
+	private final RedisUserDetailsService redisUserDetailsService;
 
-    public SecurityConfig(RedisUserDetailsService redisUserDetailsService) {
-        this.redisUserDetailsService = redisUserDetailsService;
-    }
+	public SecurityConfig(RedisUserDetailsService redisUserDetailsService) {
+		this.redisUserDetailsService = redisUserDetailsService;
+	}
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return redisUserDetailsService;
-    }
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return redisUserDetailsService;
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService());
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+	@Bean
+	public DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService());
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
+	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+		return authConfig.getAuthenticationManager();
+	}
 
-    @Bean
-    public JwtTokenProvider jwtTokenProvider() {
-        return new JwtTokenProvider();
-    }
+	@Bean
+	public JwtTokenProvider jwtTokenProvider() {
+		return new JwtTokenProvider();
+	}
 
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider(), userDetailsService());
-    }
+	@Bean
+	public JwtAuthenticationFilter jwtAuthenticationFilter() {
+		return new JwtAuthenticationFilter(jwtTokenProvider(), userDetailsService());
+	}
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-            .authorizeHttpRequests(auth -> auth
-                // 允许所有用户访问的API
-                .requestMatchers("/", "/aboutMe", "/api/articles/**", "/api/guestbook/**", "/api/").permitAll()
-                // 认证相关API
-                .requestMatchers("/api/auth/**").permitAll()
-                // 管理员操作API需要ADMIN角色
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                // 其他所有请求需要认证
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+			.authorizeHttpRequests(auth -> auth
+				// 允许所有用户访问的API
+				.requestMatchers("/", "/aboutMe", "/api/articles/**", "/api/guestbook/**", "/api/")
+				.permitAll()
+				// 认证相关API
+				.requestMatchers("/api/auth/**")
+				.permitAll()
+				// 管理员操作API需要ADMIN角色
+				.requestMatchers("/api/admin/**")
+				.hasRole("ADMIN")
+				// 其他所有请求需要认证
+				.anyRequest()
+				.authenticated())
+			.sessionManagement(session -> session
+				.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+			.authenticationProvider(authenticationProvider())
+			.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+		return http.build();
+	}
+
 }

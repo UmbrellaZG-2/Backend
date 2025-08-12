@@ -8,29 +8,32 @@ import lombok.Data;
 @Table(name = "attachments")
 @Data
 public class Attachment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long attachmentId;
 
-    @Column(length = 255, nullable = false)
-    private String fileName;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long attachmentId;
 
-    @Column(length = 255, nullable = false)
-    private String filePath;
+	@Column(length = 255, nullable = false)
+	private String fileName;
 
-    @Column(length = 100)
-    private String fileType;
+	@Column(length = 255, nullable = false)
+	private String filePath;
 
-    private Long fileSize;
+	@Column(length = 100)
+	private String fileType;
 
-    private LocalDateTime uploadTime;
+	private Long fileSize;
 
-    @ManyToOne
-    @JoinColumn(name = "article_id")
-    private Article article;
+	private LocalDateTime uploadTime;
 
-    @Column(nullable = false)
-    private Long articleId;
+	@ManyToOne
+	@JoinColumn(name = "article_id")
+	private Article article;
 
-    public Attachment() {}
+	@Column(nullable = false)
+	private Long articleId;
+
+	public Attachment() {
+	}
+
 }

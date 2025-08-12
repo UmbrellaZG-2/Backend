@@ -8,27 +8,39 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import lombok.Data;
 
+/**
+ * 评论实体类，对应文章评论表
+ */
 @Entity
 @Data
 public class Comment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false)
-    private Long articleId;
+	/** 主键ID */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private Long parentId;
+	/** 所属文章ID */
+	@Column(nullable = false)
+	private Long articleId;
 
-    @Column(nullable = false, length = 100)
-    private String nickname;
+	/** 父评论ID（顶级评论为null） */
+	private Long parentId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+	/** 昵称 */
+	@Column(nullable = false, length = 100)
+	private String nickname;
 
-    @Column(nullable = false)
-    private LocalDateTime createTime;
+	/** 评论内容 */
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String content;
 
-    @Column(length = 50)
-    private String ipAddress;
+	/** 创建时间 */
+	@Column(nullable = false)
+	private LocalDateTime createTime;
+
+	/** 评论者IP地址 */
+	@Column(length = 50)
+	private String ipAddress;
+
 }

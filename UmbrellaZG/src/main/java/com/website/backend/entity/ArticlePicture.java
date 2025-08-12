@@ -8,29 +8,32 @@ import lombok.Data;
 @Table(name = "article_pictures")
 @Data
 public class ArticlePicture {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long pictureId;
 
-    @Column(length = 255, nullable = false)
-    private String fileName;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long pictureId;
 
-    @Column(length = 255, nullable = false)
-    private String filePath;
+	@Column(length = 255, nullable = false)
+	private String fileName;
 
-    @Column(length = 100)
-    private String fileType;
+	@Column(length = 255, nullable = false)
+	private String filePath;
 
-    private Long fileSize;
+	@Column(length = 100)
+	private String fileType;
 
-    private LocalDateTime uploadTime;
+	private Long fileSize;
 
-    @OneToOne
-    @JoinColumn(name = "article_id")
-    private Article article;
+	private LocalDateTime uploadTime;
 
-    @Column(nullable = false)
-    private Long articleId;
+	@OneToOne
+	@JoinColumn(name = "article_id")
+	private Article article;
 
-    public ArticlePicture() {}
+	@Column(nullable = false)
+	private Long articleId;
+
+	public ArticlePicture() {
+	}
+
 }

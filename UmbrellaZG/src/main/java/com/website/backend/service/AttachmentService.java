@@ -6,8 +6,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface AttachmentService {
-    Attachment uploadAttachment(MultipartFile file, Article article) throws IOException;
-    byte[] downloadAttachment(Long attachmentId) throws IOException;
-    void deleteAttachment(Long attachmentId);
-    void deleteAttachmentsByArticle(Article article);
+
+	Attachment uploadAttachment(MultipartFile file, Article article) throws IOException;
+
+	byte[] downloadAttachment(Long attachmentId) throws IOException;
+
+	void deleteAttachment(Long attachmentId);
+
+	void deleteAttachmentsByArticle(Article article);
+
 }

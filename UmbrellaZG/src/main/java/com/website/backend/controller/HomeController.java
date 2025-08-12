@@ -16,26 +16,23 @@ import java.util.Map;
 @Slf4j
 public class HomeController {
 
-    private final GuestService guestService;
+	private final GuestService guestService;
 
-    public HomeController(
-            PasswordEncoder passwordEncoder,
-            GuestService guestService) {
-        this.guestService = guestService;
-    }
+	public HomeController(PasswordEncoder passwordEncoder, GuestService guestService) {
+		this.guestService = guestService;
+	}
 
-    // 首页重定向
-    @GetMapping
-    public ResponseEntity<ApiResponse<Void>> home() {
-        return ResponseEntity.ok(ApiResponse.success("请选择登录方式", null));
-    }
+	// 首页重定向
+	@GetMapping
+	public ResponseEntity<ApiResponse<Void>> home() {
+		return ResponseEntity.ok(ApiResponse.success("请选择登录方式", null));
+	}
 
-// 跳转到关于我页面
-    @GetMapping("/aboutMe")
-    public ResponseEntity<Void> redirectToAboutMe() {
-        log.info("重定向到关于我页面");
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .header("Location", "/aboutMe.html")
-                .build();
-    }
+	// 跳转到关于我页面
+	@GetMapping("/aboutMe")
+	public ResponseEntity<Void> redirectToAboutMe() {
+		log.info("重定向到关于我页面");
+		return ResponseEntity.status(HttpStatus.FOUND).header("Location", "/aboutMe.html").build();
+	}
+
 }
