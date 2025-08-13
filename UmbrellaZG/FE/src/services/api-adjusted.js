@@ -44,11 +44,8 @@ export const getArticles = (page = 0, size = 10) => api.get(`/api/articles?page=
 export const searchArticles = (keyword, page = 0, size = 10) => api.get(`/api/articles/search?keyword=${keyword}&page=${page}&size=${size}`);
 export const getArticlesByCategory = (category, page = 0, size = 10) => api.get(`/api/articles/category/${category}?page=${page}&size=${size}`);
 
-export const createArticle = (articleData) => api.post('/api/articles/admin', articleData);
-export const updateArticle = (id, articleData) => api.put(`/api/articles/admin/${id}`, articleData);
-
-export const createArticleWithAttachments = (formData) => api.post('/api/attachments/admin/articles/attachments', formData);
-export const updateArticleAttachments = (id, formData) => api.put(`/api/attachments/admin/articles/${id}/attachments`, formData);
+// 分类相关 - 添加这部分
+export const getCategories = () => api.get('/api/categories');
 
 // 标签相关
 export const getTags = () => api.get('/api/tags');
