@@ -27,11 +27,8 @@ public class Attachment {
 	private LocalDateTime uploadTime;
 
 	@ManyToOne
-	@JoinColumn(name = "article_id")
+	@JoinColumn(name = "article_id", nullable = false)
 	private Article article;
-
-	@Column(nullable = false)
-	private Long articleId;
 
 	public Attachment() {
 	}

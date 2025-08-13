@@ -27,11 +27,8 @@ public class ArticlePicture {
 	private LocalDateTime uploadTime;
 
 	@OneToOne
-	@JoinColumn(name = "article_id")
+	@JoinColumn(name = "article_id", nullable = false)
 	private Article article;
-
-	@Column(nullable = false)
-	private Long articleId;
 
 	public ArticlePicture() {
 	}

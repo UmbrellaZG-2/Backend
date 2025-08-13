@@ -29,67 +29,14 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final GuestService guestService;
-    private final PasswordEncoder passwordEncoder;
-
     /**
      * 构造函数注入依赖
      */
     public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
-            GuestService guestService, PasswordEncoder passwordEncoder) {
+            GuestService guestService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.guestService = guestService;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    /**
-     * 管理员登录
-     */
-    @PostMapping("/admin/login")
-    public ApiResponse<Map<String, Object>> adminLogin(@RequestBody LoginRequest loginRequest) {
-        String username = loginRequest.getUsername();
-        String password = loginRequest.getPassword();
-        log.info("管理员登录请求: 用户名={}", username);
-        try {
-            // 进行身份验证
-            Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(username, password));
-
-            // 设置身份验证上下文
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // 检查用户是否具有管理员角色
-            boolean isAdmin = authentication.getAuthorities()
-                .stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isAdmin) {
-                log.warn("用户 {} 没有管理员权限", username);
-                throw new ResourceNotFoundException("用户 " + username + " 没有管理员权限");
-            }
-
-            // 生成JWT令牌
-            String jwt = jwtTokenProvider.generateToken(authentication);
-            log.info("管理员 {} 登录成功", username);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "登录成功");
-            response.put("token", jwt);
-            return ApiResponse.success(response);
-        }
-        catch (AuthenticationException e) {
-            log.error("管理员登录失败: 用户名={}, 错误={}", username, e.getMessage());
-            return ApiResponse.fail(HttpStatusConstants.UNAUTHORIZED, "认证失败: 用户名或密码错误");
-        }
-        catch (ResourceNotFoundException e) {
-            log.error("管理员登录失败: {}", e.getMessage());
-            return ApiResponse.fail(HttpStatusConstants.FORBIDDEN, e.getMessage());
-        }
-        catch (Exception e) {
-            log.error("管理员登录发生未知错误: {}", e.getMessage());
-            return ApiResponse.fail(HttpStatusConstants.INTERNAL_SERVER_ERROR, "登录失败: 服务器内部错误");
-        }
     }
 
     /**
@@ -115,16 +62,6 @@ public class AuthController {
         response.put("message", "游客登录成功，有效期6小时");
 
         return ResponseEntity.ok(response);
-    }
-
-    // 登录请求体
-    @Data
-    public static class LoginRequest {
-
-        private String username;
-
-        private String password;
-
     }
 
 }

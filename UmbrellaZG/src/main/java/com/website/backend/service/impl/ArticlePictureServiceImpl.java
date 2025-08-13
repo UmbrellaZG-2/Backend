@@ -51,7 +51,6 @@ public class ArticlePictureServiceImpl implements ArticlePictureService {
 		picture.setFileSize(file.getSize());
 		picture.setUploadTime(LocalDateTime.now());
 		picture.setArticle(article);
-		picture.setArticleId(article.getArticleId());
 
 		// 保存图片信息到数据库
 		ArticlePicture savedPicture = articlePictureRepository.save(picture);

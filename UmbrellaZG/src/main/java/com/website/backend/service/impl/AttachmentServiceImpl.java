@@ -89,7 +89,6 @@ public class AttachmentServiceImpl implements AttachmentService {
 		attachment.setFileSize(fileSize);
 		attachment.setUploadTime(LocalDateTime.now());
 		attachment.setArticle(article);
-		attachment.setArticleId(article.getArticleId());
 
 		Attachment savedAttachment = attachmentRepository.save(attachment);
 		log.info("附件信息保存到数据库成功,附件ID: {}", savedAttachment.getAttachmentId());
