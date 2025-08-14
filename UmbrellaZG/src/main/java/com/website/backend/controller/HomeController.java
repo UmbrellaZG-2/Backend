@@ -38,7 +38,7 @@ public class HomeController {
 	}
 
 	@RestController
-	@RequestMapping("/api")
+	@RequestMapping("")
 	public static class ApiController {
 
 		// API关于我接口
