@@ -67,7 +67,7 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 			.authorizeHttpRequests(auth -> auth
 				// 允许所有用户访问的API
-				.requestMatchers("/", "/aboutMe", "/api/aboutme", "/api/articles/**", "/api/guestbook/**", "/api/")
+				.requestMatchers("/", "/aboutMe", "/aboutMe.html", "/api/aboutme", "/api/articles/**", "/api/guestbook/**", "/api/")
 				.permitAll()
 				// 认证相关API
 				.requestMatchers("/api/auth/**")
