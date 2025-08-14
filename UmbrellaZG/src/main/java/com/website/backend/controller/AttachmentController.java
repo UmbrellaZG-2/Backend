@@ -1,11 +1,7 @@
 package com.website.backend.controller;
 
-import com.website.backend.model.ApiResponse;
 import com.website.backend.constant.HttpStatusConstants;
-import com.website.backend.DTO.ArticleDTO;
-import com.website.backend.entity.Article;
 import com.website.backend.entity.Attachment;
-import com.website.backend.entity.ArticlePicture;
 import com.website.backend.repository.ArticleRepository;
 import com.website.backend.repository.AttachmentRepository;
 import com.website.backend.repository.ArticlePictureRepository;
@@ -18,16 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/attachments")
