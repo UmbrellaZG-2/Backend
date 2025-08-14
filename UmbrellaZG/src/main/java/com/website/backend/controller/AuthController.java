@@ -26,42 +26,45 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final GuestService guestService;
-    /**
-     * 构造函数注入依赖
-     */
-    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
-            GuestService guestService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.guestService = guestService;
-    }
+	private final AuthenticationManager authenticationManager;
 
-    /**
-     * 游客登录
-     */
-    @PostMapping("/guest/login")
-    public ResponseEntity<?> guestLogin() {
-        log.info("处理游客登录请求");
+	private final JwtTokenProvider jwtTokenProvider;
 
-        // 生成游客用户名和密码
-        String guestUsername = guestService.generateGuestUsername();
-        String guestPassword = "guest_password";
+	private final GuestService guestService;
 
-        // 保存游客信息到Redis
-        guestService.saveGuestToRedis(guestUsername, guestPassword);
+	/**
+	 * 构造函数注入依赖
+	 */
+	public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
+			GuestService guestService) {
+		this.authenticationManager = authenticationManager;
+		this.jwtTokenProvider = jwtTokenProvider;
+		this.guestService = guestService;
+	}
 
-        // 生成JWT令牌
-        String jwt = guestService.generateGuestToken(guestUsername);
+	/**
+	 * 游客登录
+	 */
+	@PostMapping("/guest/login")
+	public ResponseEntity<?> guestLogin() {
+		log.info("处理游客登录请求");
 
-        Map<String, String> response = new HashMap<>();
-        response.put("token", jwt);
-        response.put("type", "Bearer");
-        response.put("message", "游客登录成功，有效期6小时");
+		// 生成游客用户名和密码
+		String guestUsername = guestService.generateGuestUsername();
+		String guestPassword = "guest_password";
 
-        return ResponseEntity.ok(response);
-    }
+		// 保存游客信息到Redis
+		guestService.saveGuestToRedis(guestUsername, guestPassword);
+
+		// 生成JWT令牌
+		String jwt = guestService.generateGuestToken(guestUsername);
+
+		Map<String, String> response = new HashMap<>();
+		response.put("token", jwt);
+		response.put("type", "Bearer");
+		response.put("message", "游客登录成功，有效期6小时");
+
+		return ResponseEntity.ok(response);
+	}
 
 }

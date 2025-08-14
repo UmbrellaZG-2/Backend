@@ -12,40 +12,44 @@ import java.util.Map;
 @Slf4j
 public class HomeController {
 
-    @RequestMapping("/")
-    @RestController
-    public static class IndexController {
-        private final GuestService guestService;
+	@RequestMapping("/")
+	@RestController
+	public static class IndexController {
 
-        public IndexController(GuestService guestService) {
-            this.guestService = guestService;
-        }
+		private final GuestService guestService;
 
-        // 首页重定向
-        @GetMapping
-        public ResponseEntity<ApiResponse<Void>> home() {
-            return ResponseEntity.ok(ApiResponse.success("请选择登录方式", null));
-        }
+		public IndexController(GuestService guestService) {
+			this.guestService = guestService;
+		}
 
-        // 跳转到关于我页面
-        @GetMapping("/aboutMe")
-        public ResponseEntity<Void> redirectToAboutMe() {
-            log.info("重定向到关于我页面");
-            return ResponseEntity.status(HttpStatus.FOUND).header("Location", "/aboutMe.html").build();
-        }
-    }
+		// 首页重定向
+		@GetMapping
+		public ResponseEntity<ApiResponse<Void>> home() {
+			return ResponseEntity.ok(ApiResponse.success("请选择登录方式", null));
+		}
 
-    @RestController
-    @RequestMapping("/api")
-    public static class ApiController {
-        // API关于我接口
-        @GetMapping("/aboutme")
-        public ResponseEntity<ApiResponse<Map<String, String>>> aboutMe() {
-            Map<String, String> data = new HashMap<>();
-            data.put("message", "这是关于我页面的API数据");
-            data.put("status", "success");
-            return ResponseEntity.ok(ApiResponse.success("获取关于我信息成功", data));
-        }
-    }
+		// 跳转到关于我页面
+		@GetMapping("/aboutMe")
+		public ResponseEntity<Void> redirectToAboutMe() {
+			log.info("重定向到关于我页面");
+			return ResponseEntity.status(HttpStatus.FOUND).header("Location", "/aboutMe.html").build();
+		}
+
+	}
+
+	@RestController
+	@RequestMapping("/api")
+	public static class ApiController {
+
+		// API关于我接口
+		@GetMapping("/aboutme")
+		public ResponseEntity<ApiResponse<Map<String, String>>> aboutMe() {
+			Map<String, String> data = new HashMap<>();
+			data.put("message", "这是关于我页面的API数据");
+			data.put("status", "success");
+			return ResponseEntity.ok(ApiResponse.success("获取关于我信息成功", data));
+		}
+
+	}
 
 }

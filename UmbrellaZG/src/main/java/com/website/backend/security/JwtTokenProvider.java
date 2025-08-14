@@ -25,9 +25,9 @@ public class JwtTokenProvider {
 	private int jwtExpirationMs;
 
 	public String generateToken(Authentication authentication) {
-        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-        return generateTokenWithExpiration(authentication, jwtExpirationMs);
-    }
+		UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+		return generateTokenWithExpiration(authentication, jwtExpirationMs);
+	}
 
 	/**
 	 * 生成具有自定义过期时间的JWT令牌
